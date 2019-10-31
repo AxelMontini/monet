@@ -19,6 +19,10 @@ It defines some base types:
 
 Even this library isn't safe from precision losses. For example, an `Exponent`'s amount could be cut out by its exponent. Also errors when converting money could occurr.
 
+## Examples
+
+### Summing two `Money`s of the same type
+
 ```rust
 
 use monet::{Money, CurrencyAmount, Rates, Operation};
@@ -30,11 +34,39 @@ let map = vec![("USD", 1_000_000)].into_iter()
     .collect();
 let rates = Rates::with_rates(map);
 
-let money_owned = Money::with_str_coderrencyAmount::with_unit(2), "USD").unwrap();
-let money_paid = Money::with_str_coderrencyAmount::with_unit(1), "USD").unwrap();
+let money_owned = Money::with_str_code(CurrencyAmount::with_unit(2), "USD").unwrap();
+let money_paid = Money::with_str_code(CurrencyAmount::with_unit(1), "USD").unwrap();
 
 let remaining = (money_owned - money_paid).execute(&rates);
 
 assert_eq!(remaining, Money::with_str_coderrencyAmount::with_unit(1), "USD"));
+
+```
+
+### Summing two `Money`s of different type
+
+```rust
+
+use monet::{Money, CurrencyAmount, Rates, Operation};
+use std::convert::TryInto;
+
+// Custom rates.
+let map = vec![
+    ("USD", 1_000_000),
+    ("CHF", 1_100_000),
+].into_iter()
+    .map(|(code, worth)| (code.try_into().unwrap(), worth.into())
+    .collect();
+
+let rates = Rates::with_rates(map);
+
+let money_one = Money::with_str_code(1_000_000.into(), "CHF").unwrap();
+let money_two = Money::with_str_code(1_100_000.into(), "USD").unwrap();
+
+// Note: sum has currency code "CHF"
+let sum = (money_one + money_two).execute(&rates);
+assert_eq!(sum.currency_code, "CHF".into())
+
+assert_eq!(remaining, Money::with_str_code(2_000_000, "CHF"));
 
 ```

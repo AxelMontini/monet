@@ -151,6 +151,40 @@ impl Money {
     }
 }
 
+/// Money can be displayed in the following format: `12.10 CHF`.
+///
+/// Default precision is dependent on the currency code (see ISO 4217 exponent).
+/// A custom precision in range `0..=6` can be provided like this:
+///
+/// ```
+///
+/// use monet::Money;
+///
+/// let money = Money::with_str_code(12_100_000.into(), "CHF").unwrap();
+///
+/// assert_eq!(
+///     &format!("{}", money),
+///     "12.10 CHF"
+/// );
+///
+/// assert_eq!(
+///     &format!("{:.2}", money),
+///     "12.10 CHF"
+/// );
+///
+/// assert_eq!(
+///     &format!("{:.6}", money),
+///     "12.100000 CHF"
+/// );
+///
+/// // Note: the formatted version has lost a decimal due to the
+/// // lower precision
+/// assert_eq!(
+///     &format!("{:.0}", money),
+///     "12 CHF"
+/// );
+///
+/// ```
 impl fmt::Display for Money {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use iso4217::alpha3;

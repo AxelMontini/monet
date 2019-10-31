@@ -1,5 +1,10 @@
 # Monet
 
+[![Build Status](https://github.com/AxelMontini/monet/workflows/Rust/badge.svg)](https://github.com/AxelMontini/monet/actions)
+[![MPL-2.0 Licensed](https://img.shields.io/crates/l/monet/0.1.0)](./LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/monet)](https://crates.io/crates/monet)
+[![Docs](https://docs.rs/monet/badge.svg)](https://docs.rs/crate/monet/)
+
 Handle currency conversion and common operations (addition, subtraction, multiplication, division).
 
 ## How it works

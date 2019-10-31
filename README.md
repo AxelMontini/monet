@@ -30,7 +30,7 @@ use std::convert::TryInto;
 
 // Custom rates.
 let map = vec![("USD", 1_000_000)].into_iter()
-    .map(|(code, worth)| (code.try_into().unwrap(), worth.into)
+    .map(|(code, worth)| (code.try_into().unwrap(), worth.into())
     .collect();
 let rates = Rates::with_rates(map);
 

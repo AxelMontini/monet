@@ -2,6 +2,9 @@ use crate::CurrencyAmount;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
+#[cfg(feature = "serialize")]
+use serde::{Deserialize, Serialize};
+
 /// Tuple struct used to define an amount with an exponent.
 /// Useful when used in Mul/Div operations:
 ///
@@ -12,6 +15,7 @@ use std::convert::TryFrom;
 ///
 /// ```
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct Exponent {
     pub amount: CurrencyAmount,
     pub exponent: u8,
@@ -41,6 +45,7 @@ pub struct Rates {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct CurrencyCode {
     code: [u8; 3],
 }

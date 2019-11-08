@@ -9,6 +9,9 @@ pub use ops::Operation;
 use std::convert::TryInto;
 use std::fmt;
 
+#[cfg(feature = "serialize")]
+use serde::{Deserialize, Serialize};
+
 /// How much `amount` makes a unit
 pub const AMOUNT_UNIT: i128 = 1_000_000;
 
@@ -16,6 +19,7 @@ pub const AMOUNT_UNIT: i128 = 1_000_000;
 /// expressed in fractions of a unit.
 /// `CurrencyAmount(`[`AMOUNT_UNIT`](constant.AMOUNT_UNIT.html)`)` makes a unit.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct CurrencyAmount(i128);
 
 impl CurrencyAmount {
@@ -97,6 +101,12 @@ impl From<i128> for CurrencyAmount {
     }
 }
 
+impl From<CurrencyAmount> for i128 {
+    fn from(amount: CurrencyAmount) -> Self {
+        *amount
+    }
+}
+
 /// A struct containing an `amount` of money having a certain `currency_code`.
 /// Note that `amount` contains fractions of a unit. See [`AMOUNT_UNIT`](constant.AMOUNT_UNIT.html).
 ///
@@ -122,6 +132,7 @@ impl From<i128> for CurrencyAmount {
 ///
 /// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Money {
     pub amount: CurrencyAmount,
     pub currency_code: CurrencyCode,
@@ -255,6 +266,9 @@ mod tests {
         use crate::Money;
         use std::convert::TryInto;
 
+        #[cfg(feature = "serialize")]
+        use serde::{Serialize, Deserialize};
+
         #[test]
         fn test_into_code() {
             let money_chf = Money::new(
@@ -270,6 +284,16 @@ mod tests {
                     "USD".try_into().unwrap()
                 ))
             );
+        }
+
+        #[cfg(feature = "serialize")]
+        #[cfg_attr(feature = "serialize", test)]
+        fn test_de_serialize() {
+            fn deserialize<'de, D: Deserialize<'de>>() {}
+            fn serialize<D: Serialize>() {}
+
+            deserialize::<Money>();
+            serialize::<Money>();
         }
 
         #[test]

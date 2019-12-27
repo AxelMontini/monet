@@ -1,6 +1,8 @@
+use crate::error::{Error, Result};
 use crate::CurrencyAmount;
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::str::FromStr;
 
 #[cfg(feature = "serialize")]
 use serde::{Deserialize, Serialize};
@@ -82,17 +84,20 @@ impl Rates {
     /// The `worth` could be seen as "how many base units are needed to make one of this".
     /// If a USD is worth `1_000_000` and a CHF is worth `2_000_000`, that means that 2 USD are
     /// needed to make 1 CHF.
-    pub fn worth(&self, code: CurrencyCode) -> Option<CurrencyAmount> {
-        self.map.get(&code).cloned()
+    pub fn worth(&self, code: CurrencyCode) -> Result<CurrencyAmount> {
+        self.map
+            .get(&code)
+            .copied()
+            .ok_or(Error::RateNotFound(code))
     }
 }
 
 impl<'s> TryFrom<&'s str> for CurrencyCode {
-    type Error = String;
+    type Error = Error;
 
-    fn try_from(s: &'s str) -> Result<Self, Self::Error> {
+    fn try_from(s: &'s str) -> Result<Self> {
         if s.len() != 3 {
-            Err(format!("Given string has not length 3: \"{}\"", s))
+            Err(Error::MalformedCode(s.into()))
         } else {
             let bytes = s.as_bytes();
             Ok(CurrencyCode {
@@ -104,7 +109,15 @@ impl<'s> TryFrom<&'s str> for CurrencyCode {
 
 impl<'a> TryFrom<&'a CurrencyCode> for &'a str {
     type Error = std::str::Utf8Error;
-    fn try_from(code: &'a CurrencyCode) -> Result<Self, Self::Error> {
+    fn try_from(code: &'a CurrencyCode) -> std::result::Result<Self, Self::Error> {
         std::str::from_utf8(&code[..])
+    }
+}
+
+impl FromStr for CurrencyCode {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::try_from(s)
     }
 }

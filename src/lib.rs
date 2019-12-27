@@ -1,9 +1,11 @@
 #![deny(warnings)]
 
 mod currency;
+mod error;
 mod ops;
 
 pub use currency::{CurrencyCode, Exponent, Rates};
+pub use error::{Error, Result};
 pub use ops::Operation;
 
 use std::convert::TryInto;
@@ -119,7 +121,7 @@ impl From<CurrencyAmount> for i128 {
 ///
 /// // Custom rates.
 /// let map = vec![("USD", 1_000_000)].into_iter()
-///     .map(|(code, worth)| (code.try_into().unwrap(), worth.into()))
+///     .map(|(code, worth)| (code.parse().unwrap(), worth.into()))
 ///     .collect();
 /// let rates = Rates::with_rates(map);
 ///
@@ -146,19 +148,25 @@ impl Money {
         }
     }
 
-    pub fn into_code(self, code: CurrencyCode, rates: &Rates) -> Option<Money> {
+    pub fn into_code(self, code: CurrencyCode, rates: &Rates) -> Result<Money> {
         let worth_self = rates.worth(self.currency_code)?;
         let worth_new = rates.worth(code)?;
 
-        Some(Money {
+        Ok(Money {
             amount: self.amount * worth_self / worth_new,
             currency_code: code,
         })
     }
 
     /// Creates `Money` with given amount and code. Returns `None` if the given code is not three characters long.
-    pub fn with_str_code(amount: CurrencyAmount, currency_code: &str) -> Option<Money> {
-        Some(Money::new(amount, currency_code.try_into().ok()?))
+    pub fn with_str_code(amount: CurrencyAmount, currency_code: &str) -> Result<Money> {
+        Ok(Money::new(amount, currency_code.parse()?))
+    }
+
+    /// Creates `Money` like `Money::with_str_code` does, but with cents instead of an amount
+    ///  for the sake of a shorter function name.
+    pub fn with_cents(cents: i128, currency_code: &str) -> Result<Money> {
+        Money::with_str_code(CurrencyAmount::with_cents(cents), currency_code)
     }
 }
 
@@ -264,26 +272,24 @@ mod tests {
         use crate::rates;
         use crate::CurrencyAmount;
         use crate::Money;
-        use std::convert::TryInto;
 
         #[cfg(feature = "serialize")]
-        use serde::{Serialize, Deserialize};
+        use serde::{Deserialize, Serialize};
 
         #[test]
-        fn test_into_code() {
-            let money_chf = Money::new(
-                CurrencyAmount::with_unit(1_000_000),
-                "CHF".try_into().unwrap(),
-            );
-            let money_usd = money_chf.into_code("USD".try_into().unwrap(), &rates());
+        fn test_into_code() -> crate::Result<()> {
+            let money_chf = Money::new(CurrencyAmount::with_unit(1_000_000), "CHF".parse()?);
+            let money_usd = money_chf.into_code("USD".parse()?, &rates());
 
             assert_eq!(
                 money_usd,
-                Some(Money::new(
+                Ok(Money::new(
                     CurrencyAmount::with_unit(1_100_000),
-                    "USD".try_into().unwrap()
+                    "USD".parse()?
                 ))
             );
+
+            Ok(())
         }
 
         #[cfg(feature = "serialize")]

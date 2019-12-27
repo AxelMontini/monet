@@ -1,9 +1,10 @@
+use crate::Result;
 use crate::{Exponent, Money, Rates};
 
 /// A generic operation trait
 pub trait Operation {
     /// Execute this operation agains some defined rates.
-    fn execute(self, rates: &Rates) -> Option<Money>;
+    fn execute(self, rates: &Rates) -> Result<Money>;
 }
 
 /// An operation adding two currencies. The output has same currency code as `A`.
@@ -16,11 +17,11 @@ pub struct Mul<A: Operation>(pub A, pub Exponent);
 pub struct Div<A: Operation>(pub A, pub Exponent);
 
 impl<A: Operation, B: Operation> Operation for Add<A, B> {
-    fn execute(self, rates: &Rates) -> Option<Money> {
+    fn execute(self, rates: &Rates) -> Result<Money> {
         let money_a = self.0.execute(rates)?;
         let money_b = self.1.execute(rates)?;
 
-        Some(Money::new(
+        Ok(Money::new(
             money_a.amount + money_b.into_code(money_a.currency_code, rates)?.amount,
             money_a.currency_code,
         ))
@@ -28,11 +29,11 @@ impl<A: Operation, B: Operation> Operation for Add<A, B> {
 }
 
 impl<A: Operation, B: Operation> Operation for Sub<A, B> {
-    fn execute(self, rates: &Rates) -> Option<Money> {
+    fn execute(self, rates: &Rates) -> Result<Money> {
         let money_a = self.0.execute(rates)?;
         let money_b = self.1.execute(rates)?;
 
-        Some(Money::new(
+        Ok(Money::new(
             money_a.amount - money_b.into_code(money_a.currency_code, rates)?.amount,
             money_a.currency_code,
         ))
@@ -40,11 +41,11 @@ impl<A: Operation, B: Operation> Operation for Sub<A, B> {
 }
 
 impl<A: Operation> Operation for Mul<A> {
-    fn execute(self, rates: &Rates) -> Option<Money> {
+    fn execute(self, rates: &Rates) -> Result<Money> {
         let exponent = &self.1;
         let money_a = self.0.execute(rates)?;
 
-        Some(Money::new(
+        Ok(Money::new(
             money_a.amount * exponent.amount / 10i128.pow(u32::from(exponent.exponent)).into(),
             money_a.currency_code,
         ))
@@ -52,11 +53,11 @@ impl<A: Operation> Operation for Mul<A> {
 }
 
 impl<A: Operation> Operation for Div<A> {
-    fn execute(self, rates: &Rates) -> Option<Money> {
+    fn execute(self, rates: &Rates) -> Result<Money> {
         let exponent = &self.1;
         let money_a = self.0.execute(rates)?;
 
-        Some(Money::new(
+        Ok(Money::new(
             money_a.amount * 10i128.pow(u32::from(exponent.exponent)).into() / exponent.amount,
             money_a.currency_code,
         ))
@@ -182,8 +183,8 @@ impl<_A: Operation> std::ops::Div<Exponent> for Div<_A> {
 // Impl Operation for money, to allow easier chaining
 
 impl Operation for Money {
-    fn execute(self, _rates: &Rates) -> Option<Money> {
-        Some(self)
+    fn execute(self, _rates: &Rates) -> Result<Money> {
+        Ok(self)
     }
 }
 
@@ -219,76 +220,86 @@ impl std::ops::Div<Exponent> for Money {
 #[cfg(test)]
 mod tests {
     use crate::rates;
+    use crate::Result;
     use crate::{Exponent, Money, Operation};
-    use std::convert::TryInto;
 
     #[test]
-    fn test_add_same_code_operation() {
-        let money1 = Money::new(1_000_000.into(), "USD".try_into().unwrap());
-        let money2 = Money::new(2_000_001.into(), "USD".try_into().unwrap());
+    fn test_add_same_code_operation() -> Result<()> {
+        let money1 = Money::new(1_000_000.into(), "USD".parse()?);
+        let money2 = Money::new(2_000_001.into(), "USD".parse()?);
         let rates = rates();
 
         assert_eq!(
-            Some(Money::new(3_000_001.into(), "USD".try_into().unwrap())),
+            Ok(Money::new(3_000_001.into(), "USD".parse()?)),
             (money1 + money2).execute(&rates)
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_add_operation() {
+    fn test_add_operation() -> Result<()> {
         // Two equal amounts of money
-        let money1 = Money::with_str_code(1_000_010.into(), "GBP").unwrap();
-        let money2 = Money::with_str_code(1_500_015.into(), "USD").unwrap();
+        let money1 = Money::with_str_code(1_000_010.into(), "GBP")?;
+        let money2 = Money::with_str_code(1_500_015.into(), "USD")?;
         let rates = rates();
 
         assert_eq!(
             Money::with_str_code(2_000_020.into(), "GBP"),
             (money1 + money2).execute(&rates)
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_add_negative_operation() {
+    fn test_add_negative_operation() -> Result<()> {
         // Two equal amounts of money
-        let money1 = Money::with_str_code(1_000_010.into(), "GBP").unwrap();
-        let money2 = Money::with_str_code((-1_500_015).into(), "USD").unwrap();
+        let money1 = Money::with_str_code(1_000_010.into(), "GBP")?;
+        let money2 = Money::with_str_code((-1_500_015).into(), "USD")?;
         let rates = rates();
 
         assert_eq!(
             Money::with_str_code(0.into(), "GBP"),
             (money1 + money2).execute(&rates)
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_sub_operation() {
+    fn test_sub_operation() -> Result<()> {
         // Two equal amounts of money
-        let money1 = Money::with_str_code(1_000_010.into(), "GBP").unwrap();
-        let money2 = Money::with_str_code(1_500_015.into(), "USD").unwrap();
+        let money1 = Money::with_str_code(1_000_010.into(), "GBP")?;
+        let money2 = Money::with_str_code(1_500_015.into(), "USD")?;
         let rates = rates();
 
         assert_eq!(
             Money::with_str_code(0.into(), "GBP"),
             (money1 - money2).execute(&rates)
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_sub_negative_operation() {
+    fn test_sub_negative_operation() -> Result<()> {
         // Two equal amounts of money
-        let money1 = Money::with_str_code(1_000_010.into(), "GBP").unwrap();
-        let money2 = Money::with_str_code((-1_500_015).into(), "USD").unwrap();
+        let money1 = Money::with_str_code(1_000_010.into(), "GBP")?;
+        let money2 = Money::with_str_code((-1_500_015).into(), "USD")?;
         let rates = rates();
 
         assert_eq!(
             Money::with_str_code(2_000_020.into(), "GBP"),
             (money1 - money2).execute(&rates)
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_mul_operation() {
-        let money = Money::with_str_code(1_000_001.into(), "USD").unwrap();
+    fn test_mul_operation() -> Result<()> {
+        let money = Money::with_str_code(1_000_001.into(), "USD")?;
 
         assert_eq!(
             (money * Exponent::new(1000.into(), 2)).execute(&rates()),
@@ -299,11 +310,13 @@ mod tests {
             (money * Exponent::new(1000.into(), 4)).execute(&rates()),
             Money::with_str_code(100_000.into(), "USD")
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_mul_negative_operation() {
-        let money = Money::with_str_code((-1_000_001).into(), "USD").unwrap();
+    fn test_mul_negative_operation() -> Result<()> {
+        let money = Money::with_str_code((-1_000_001).into(), "USD")?;
 
         assert_eq!(
             (money * Exponent::new(1000.into(), 2)).execute(&rates()),
@@ -314,11 +327,13 @@ mod tests {
             (money * Exponent::new(1000.into(), 4)).execute(&rates()),
             Money::with_str_code((-100_000).into(), "USD")
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_div_operation() {
-        let money = Money::with_str_code(1_000_001.into(), "USD").unwrap();
+    fn test_div_operation() -> Result<()> {
+        let money = Money::with_str_code(1_000_001.into(), "USD")?;
 
         assert_eq!(
             (money / Exponent::new(1000.into(), 2)).execute(&rates()),
@@ -329,11 +344,13 @@ mod tests {
             (money / Exponent::new(1000.into(), 4)).execute(&rates()),
             Money::with_str_code(10_000_010.into(), "USD")
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_div_negative_operation() {
-        let money = Money::with_str_code((-1_000_001).into(), "USD").unwrap();
+    fn test_div_negative_operation() -> Result<()> {
+        let money = Money::with_str_code((-1_000_001).into(), "USD")?;
 
         assert_eq!(
             (money / Exponent::new(1000.into(), 2)).execute(&rates()),
@@ -344,45 +361,53 @@ mod tests {
             (money / Exponent::new(1000.into(), 4)).execute(&rates()),
             Money::with_str_code((-10_000_010).into(), "USD")
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_money_operation() {
-        let money = Money::with_str_code(1_000_000.into(), "USD").unwrap();
+    fn test_money_operation() -> Result<()> {
+        let money = Money::with_str_code(1_000_000.into(), "USD")?;
         let rates = rates();
 
-        assert_eq!(money.execute(&rates), Some(money));
+        assert_eq!(money.execute(&rates), Ok(money));
+
+        Ok(())
     }
 
     #[test]
-    fn test_long_add_and_sub_chain() {
-        let money1 = Money::with_str_code(1_000_000.into(), "USD").unwrap();
-        let money2 = Money::with_str_code(1_000_000.into(), "USD").unwrap();
-        let money3 = Money::with_str_code(2_000_000.into(), "USD").unwrap();
-        let money4 = Money::with_str_code(2_000_000.into(), "USD").unwrap();
-        let money5 = Money::with_str_code(1_000_000.into(), "USD").unwrap();
-        let money6 = Money::with_str_code(1_000_000.into(), "USD").unwrap();
-        let money7 = Money::with_str_code(2_000_000.into(), "USD").unwrap();
+    fn test_long_add_and_sub_chain() -> Result<()> {
+        let money1 = Money::with_str_code(1_000_000.into(), "USD")?;
+        let money2 = Money::with_str_code(1_000_000.into(), "USD")?;
+        let money3 = Money::with_str_code(2_000_000.into(), "USD")?;
+        let money4 = Money::with_str_code(2_000_000.into(), "USD")?;
+        let money5 = Money::with_str_code(1_000_000.into(), "USD")?;
+        let money6 = Money::with_str_code(1_000_000.into(), "USD")?;
+        let money7 = Money::with_str_code(2_000_000.into(), "USD")?;
 
         let result =
             (money1 + money2 - money3 + money4 + money5 - money6 - money7).execute(&rates());
 
-        assert_eq!(result, Money::with_str_code(0.into(), "USD"))
+        assert_eq!(result, Money::with_str_code(0.into(), "USD"));
+
+        Ok(())
     }
 
     #[test]
-    fn test_long_add_and_sub_chain_with_negative_outcome() {
-        let money1 = Money::with_str_code(1_000_000.into(), "USD").unwrap();
-        let money2 = Money::with_str_code(1_000_000.into(), "USD").unwrap();
-        let money3 = Money::with_str_code(2_000_000.into(), "USD").unwrap();
-        let money4 = Money::with_str_code(2_000_000.into(), "USD").unwrap();
-        let money5 = Money::with_str_code(1_000_000.into(), "USD").unwrap();
-        let money6 = Money::with_str_code(1_000_000.into(), "USD").unwrap();
-        let money7 = Money::with_str_code(3_000_000.into(), "USD").unwrap();
+    fn test_long_add_and_sub_chain_with_negative_outcome() -> Result<()> {
+        let money1 = Money::with_str_code(1_000_000.into(), "USD")?;
+        let money2 = Money::with_str_code(1_000_000.into(), "USD")?;
+        let money3 = Money::with_str_code(2_000_000.into(), "USD")?;
+        let money4 = Money::with_str_code(2_000_000.into(), "USD")?;
+        let money5 = Money::with_str_code(1_000_000.into(), "USD")?;
+        let money6 = Money::with_str_code(1_000_000.into(), "USD")?;
+        let money7 = Money::with_str_code(3_000_000.into(), "USD")?;
 
         let result =
             (money1 + money2 - money3 + money4 + money5 - money6 - money7).execute(&rates());
 
-        assert_eq!(result, Money::with_str_code((-1_000_000).into(), "USD"))
+        assert_eq!(result, Money::with_str_code((-1_000_000).into(), "USD"));
+
+        Ok(())
     }
 }

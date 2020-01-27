@@ -1,21 +1,9 @@
-[package]
-name = "monet"
-version = "0.1.1"
-authors = ["Axel <axel.montini@gmail.com>"]
-edition = "2018"
-description = "Handle currency conversion and common operations (additions, ...)"
-repository = "https://github.com/AxelMontini/monet.git"
-readme = "README.md"
-license = "MPL-2.0"
+[workspace]
+members = [
+    "monet",
+    "monet-derive",
+    "monet-traits",
+]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[features]
-default = []
-serialize = ["serde"]
-
-[dependencies]
-iso4217 = "0.3"
-# reqwest = "0.10.0-alpha.1"
-serde = {version = "1.0.102", optional = true, features = ["derive"]}
-thiserror = "1.0.9"
+[profiles.test]
+features = ["full"]

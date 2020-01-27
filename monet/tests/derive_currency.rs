@@ -1,7 +1,7 @@
-use monet::Money;
-
 #[cfg(feature = "csv")]
 mod csv {
+    use monet::Money;
+
     #[test]
     fn good() {
         mod currency {
@@ -16,6 +16,8 @@ mod csv {
 
 
 mod array {
+    use monet::Money;
+    
     #[test]
     fn array() {
         mod currency {

@@ -3,9 +3,15 @@
 //!
 //! # Usage
 //!
-//! ```rust
+//! ```ignore
 //! use monet_derive::*;
+//! 
 //! define_currency_csv!("path/to/file.csv");
+//! 
+//! define_currency_array!([
+//!     ("US Dollar", "USD", 2),
+//!     ("Swiss Franc", "CHF" 2),
+//! ]);
 //! ```
 //!
 //! It will also define `currency::Unknown`, a variant used only when creating a Money with

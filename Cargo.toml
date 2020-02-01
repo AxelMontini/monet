@@ -4,6 +4,3 @@ members = [
     "monet-derive",
     "monet-traits",
 ]
-
-[profiles.test]
-features = ["full"]

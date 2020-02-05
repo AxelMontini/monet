@@ -1,10 +1,7 @@
 use thiserror::Error;
 
-
 #[derive(Error, Debug, Clone, PartialEq)]
-pub enum Error {
-
-}
+pub enum Error {}
 
 #[derive(Error, Debug, Clone, PartialEq)]
 pub enum ConvertError<'d> {

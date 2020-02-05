@@ -1,4 +1,4 @@
-use monet::{Currency, Money};
+use monet::Money;
 
 mod currency {
     use monet::define_currency_csv;

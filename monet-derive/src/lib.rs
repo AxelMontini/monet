@@ -58,28 +58,28 @@ pub fn define_currency_csv(input: TokenStream) -> TokenStream {
 }
 
 /// Define currencies here, by providing an array of tuples in the following format:
-/// 
+///
 /// ```
 /// # mod hidden {
 /// use monet_derive::*;
 /// define_currency_array!([("US Dollar", "USD", 2), ("Swiss Franc", "CHF", 2)]);
 /// # }
 /// ```
-/// 
+///
 /// It is good practice to put it in a module called `currency`, but you can really do whatever
 /// you want with it, as long as it in the right location. Currently function-like proc-macros cannot
 /// be expanded into statements, so you cannot put the first example into a function body, unless you
 /// wrap it into a module like this:
-/// 
+///
 /// ```
 /// mod currency {
 ///     use monet_derive::*;
 ///     define_currency_array!([("My currency", "CODE", 3)]);
 /// }
 /// ```
-/// 
+///
 /// Wrong syntax will produce a compilation error
-/// 
+///
 /// ```compile_fail
 /// use monet_derive::*;
 /// define_currency_array!(
@@ -148,5 +148,6 @@ fn define_currency<I: Iterator<Item = Entry>>(iter: I) -> TokenStream {
         };
 
         TokenStream::from(currency)
-    }).collect()
+    })
+    .collect()
 }

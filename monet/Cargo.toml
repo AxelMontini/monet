@@ -1,6 +1,6 @@
 [package]
 name = "monet"
-version = "0.1.1"
+version = "0.2.0-alpha.1"
 authors = ["Axel <axel.montini@gmail.com>"]
 edition = "2018"
 description = "Handle currency conversion and common operations (additions, ...)"
@@ -10,15 +10,12 @@ license = "MPL-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[profile.test]
-default = ["full"]
-
 [features]
-default = ["u128"]
+default = ["i128"]
 serialize = ["serde"]
 csv = ["monet-derive/csv"]
-u128 = []
-full = ["u128", "csv", "serialize"]
+i128 = []
+full = ["i128", "csv", "serialize"]
 
 [dependencies]
 serde = {version = "1.0.102", optional = true, features = ["derive"]}

@@ -38,12 +38,30 @@ impl<C: Currency> fmt::Display for Money<C> {
                 .collect();
             decimals.push_str(&decimals_short);
 
+            let mut units_width = 0u32;
+            loop {
+                let i = units / 10i128.pow(units_width);
+
+                // negative numbers would create and infinite loop, and that's not good
+                if i.abs() >= 10 {
+                    units_width += 1;
+                } else {
+                    break;
+                }
+            }
+
+            // The "-" is an extra character
+            if units.signum() == -1 {
+                units_width += 1;
+            }
+
             write!(
                 f,
-                concat!("{code} {units}.{decimals}"),
+                "{code} {units}.{decimals:width$}",
                 code = code,
                 units = units,
-                decimals = decimals
+                decimals = decimals,
+                width = f.width().map(|width| width - code.len() - 2 - units_width as usize - precision as usize).unwrap_or(precision as usize)
             )
         }
     }

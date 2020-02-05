@@ -2,7 +2,7 @@ use super::Currency;
 use super::{Money, MoneyDynamic};
 use std::ops::{Add, Sub};
 
-impl<'c, C: Currency<'c>> Add for Money<'c, C> {
+impl<C: Currency> Add for Money<C> {
     type Output = Self;
 
     fn add(mut self, other: Self) -> Self::Output {
@@ -11,7 +11,7 @@ impl<'c, C: Currency<'c>> Add for Money<'c, C> {
     }
 }
 
-impl<'c, C: Currency<'c>> Sub for Money<'c, C> {
+impl<C: Currency> Sub for Money<C> {
     type Output = Self;
 
     fn sub(mut self, other: Self) -> Self::Output {
@@ -20,7 +20,7 @@ impl<'c, C: Currency<'c>> Sub for Money<'c, C> {
     }
 }
 
-impl<'r, 'c, C: Currency<'c>> Add<&'r Self> for Money<'c, C> {
+impl<'r, C: Currency> Add<&'r Self> for Money<C> {
     type Output = Self;
 
     fn add(mut self, other: &'r Self) -> Self::Output {
@@ -29,7 +29,7 @@ impl<'r, 'c, C: Currency<'c>> Add<&'r Self> for Money<'c, C> {
     }
 }
 
-impl<'r, 'c, C: Currency<'c>> Sub<&'r Self> for Money<'c, C> {
+impl<'r,C: Currency> Sub<&'r Self> for Money<C> {
     type Output = Self;
 
     fn sub(mut self, other: &'r Self) -> Self::Output {
@@ -62,14 +62,14 @@ impl<'a, 'b> Sub<MoneyDynamic<'b>> for MoneyDynamic<'a> {
     }
 }
 
-impl<'c, C: Currency<'c>> std::iter::Sum for Money<'c, C> {
+impl<'c, C: Currency> std::iter::Sum for Money<C> {
     fn sum<I: Iterator<Item = Self>>(mut iter: I) -> Self {
         let first = iter.next().unwrap();
         iter.fold(first, Add::add)
     }
 }
 
-impl<'r, 'c: 'r, C: Currency<'c>> std::iter::Sum<&'r Self> for Money<'c, C> {
+impl<'r, C: Currency + 'r> std::iter::Sum<&'r Self> for Money<C> {
     fn sum<I: Iterator<Item = &'r Self>>(iter: I) -> Self {
         iter.fold(Money::with_amount(0), Add::add)
     }

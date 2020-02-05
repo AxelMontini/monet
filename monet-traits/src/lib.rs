@@ -1,5 +1,5 @@
-pub trait Currency<'a> {
+pub trait Currency {
     const UNITS: u8;
-    const CODE: &'a str;
-    const NAME: &'a str;
+    const CODE: &'static str;
+    const NAME: &'static str;
 }

@@ -9,21 +9,21 @@ type Amount = i64;
 
 #[allow(unused)]
 #[derive(Debug, Clone, PartialEq)]
-pub struct Money<'c, C: Currency<'c>> {
+pub struct Money<C: Currency> {
     pub amount: Amount,
-    _phantom: std::marker::PhantomData<&'c C>,
+    _phantom: std::marker::PhantomData<C>,
 }
 
-impl<'c, C: Currency<'c>> Money<'c, C> {
+impl<C: Currency> Money<C> {
     pub fn with_amount(amount: Amount) -> Self {
         Self {
             amount,
-            _phantom: std::marker::PhantomData::<&'c C>,
+            _phantom: Default::default(),
         }
     }
 }
 
-impl<'c, C: Currency<'c>> fmt::Display for Money<'c, C> {
+impl<C: Currency> fmt::Display for Money<C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let code = C::CODE;
         let precision = C::UNITS as u32;
@@ -93,7 +93,7 @@ impl<'a> MoneyDynamic<'a> {
     }
 }
 
-impl<'a, 'c, C: Currency<'c>> TryFrom<MoneyDynamic<'a>> for Money<'c, C> {
+impl<'a, C: Currency> TryFrom<MoneyDynamic<'a>> for Money<C> {
     type Error = crate::ConvertError<'a>;
 
     fn try_from(money_dynamic: MoneyDynamic<'a>) -> crate::ConvertResult<Self> {

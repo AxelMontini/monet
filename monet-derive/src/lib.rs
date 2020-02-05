@@ -138,7 +138,7 @@ fn define_currency<I: Iterator<Item = Entry>>(iter: I) -> TokenStream {
             #[derive(Debug, PartialEq, Eq)]
             pub struct #identifier;
 
-            impl monet_traits::Currency<'static> for #identifier {
+            impl monet_traits::Currency for #identifier {
                 const UNITS: u8 = #units;
 
                 const CODE: &'static str = #code;

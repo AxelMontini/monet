@@ -61,7 +61,10 @@ impl<C: Currency> fmt::Display for Money<C> {
                 code = code,
                 units = units,
                 decimals = decimals,
-                width = f.width().map(|width| width - code.len() - 2 - units_width as usize - precision as usize).unwrap_or(precision as usize)
+                width = f
+                    .width()
+                    .map(|width| width - code.len() - 2 - units_width as usize - precision as usize)
+                    .unwrap_or(precision as usize)
             )
         }
     }

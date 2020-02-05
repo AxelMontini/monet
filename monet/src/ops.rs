@@ -29,7 +29,7 @@ impl<'r, C: Currency> Add<&'r Self> for Money<C> {
     }
 }
 
-impl<'r,C: Currency> Sub<&'r Self> for Money<C> {
+impl<'r, C: Currency> Sub<&'r Self> for Money<C> {
     type Output = Self;
 
     fn sub(mut self, other: &'r Self) -> Self::Output {

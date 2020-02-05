@@ -5,9 +5,9 @@
 //!
 //! ```ignore
 //! use monet_derive::*;
-//! 
+//!
 //! define_currency_csv!("path/to/file.csv");
-//! 
+//!
 //! define_currency_array!([
 //!     ("US Dollar", "USD", 2),
 //!     ("Swiss Franc", "CHF" 2),
@@ -57,30 +57,66 @@ pub fn define_currency_csv(input: TokenStream) -> TokenStream {
     }
 }
 
+/// Define currencies here, by providing an array of tuples in the following format:
+/// 
+/// ```
+/// # mod hidden {
+/// use monet_derive::*;
+/// define_currency_array!([("US Dollar", "USD", 2), ("Swiss Franc", "CHF", 2)]);
+/// # }
+/// ```
+/// 
+/// It is good practice to put it in a module called `currency`, but you can really do whatever
+/// you want with it, as long as it in the right location. Currently function-like proc-macros cannot
+/// be expanded into statements, so you cannot put the first example into a function body, unless you
+/// wrap it into a module like this:
+/// 
+/// ```
+/// mod currency {
+///     use monet_derive::*;
+///     define_currency_array!([("My currency", "CODE", 3)]);
+/// }
+/// ```
+/// 
+/// Wrong syntax will produce a compilation error
+/// 
+/// ```compile_fail
+/// use monet_derive::*;
+/// define_currency_array!(
+///     [
+///         ("US Dollar", NOT_A_STRING, 2),
+///     ]
+/// );
+/// ```
 #[proc_macro]
 pub fn define_currency_array(input: TokenStream) -> TokenStream {
     let array = syn::parse_macro_input!(input as syn::ExprArray);
 
-    let entries = array.elems.iter().map(|elem| {
-        match elem {
-            syn::Expr::Tuple(tuple) => {
-                let record: Vec<_> = tuple.elems.iter().collect();
-                match (record[0], record[1], record[2]) {
-                    (
-                        syn::Expr::Lit(syn::ExprLit {lit: syn::Lit::Str(name), ..}),
-                        syn::Expr::Lit(syn::ExprLit {lit: syn::Lit::Str(code), ..}),
-                        syn::Expr::Lit(syn::ExprLit {lit: syn::Lit::Int(units), ..})
-                    ) => {
-                        Entry {name: name.value(), code: code.value(), units: units.base10_digits().parse().expect("malformed units")}
-                    },
-                    _ => panic!("The tuple must contain three valid literals: name (str), code (str), units (u8)"),
-                }
-            },
-            _ => panic!("The currency array should contain tuples!"),
-        }
-    });
+    let maybe_entries: Result<Vec<_>, TokenStream> = {
+        array.elems.iter().map(|elem| {
+            match elem {
+                syn::Expr::Tuple(tuple) => {
+                    let record: Vec<_> = tuple.elems.iter().collect();
+                    match (record[0], record[1], record[2]) {
+                        (
+                            syn::Expr::Lit(syn::ExprLit {lit: syn::Lit::Str(name), ..}),
+                            syn::Expr::Lit(syn::ExprLit {lit: syn::Lit::Str(code), ..}),
+                            syn::Expr::Lit(syn::ExprLit {lit: syn::Lit::Int(units), ..})
+                        ) => {
+                            Ok(Entry {name: name.value(), code: code.value(), units: units.base10_digits().parse().expect("malformed units")})
+                        },
+                        _ => Err(TokenStream::from(quote::quote! {compile_error!("The tuple must contain three valid literals: name (str), code (str), units (u8)")}))?,
+                    }
+                },
+                _ => Err(TokenStream::from(quote::quote! {compile_error!("The currency array should contain tuples!")}))?,
+            }
+        }).collect()
+    };
 
-    define_currency(entries)
+    match maybe_entries {
+        Ok(entries) => define_currency(entries.into_iter()),
+        Err(error) => error,
+    }
 }
 
 #[derive(Debug)]
@@ -111,33 +147,6 @@ fn define_currency<I: Iterator<Item = Entry>>(iter: I) -> TokenStream {
             }
         };
 
-        // let fmt = if units > 0 {
-        //     quote::quote! {
-        //         impl std::fmt::Display for monet::Money<'static, #identifier> {
-        //             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        //                 let code = #identifier::CODE;
-        //                 let precision = #identifier::UNITS as u32;
-        //                 let units = self.amount / 10u128.pow(precision);
-        //                 let decimals = self.amount % 10u128.pow(precision);
-        //                 write!(f, concat!("{code} {units}.{decimals:", stringify!(#units), "}"), code = code, units = units, decimals = decimals)
-        //             }
-        //         }
-        //     }
-        // } else {
-        //     quote::quote! {
-        //         impl fmt::Display for monet::Money<'static, #code> {
-        //             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        //                 let code = #code::CODE;
-        //                 let units = self.amount;
-        //                 write!(f, "{code} {units}", code = code, units = units)
-        //             }
-        //         }
-        //     }
-        // };
-
-        // currency.extend(fmt);
-
         TokenStream::from(currency)
-    })
-    .collect()
+    }).collect()
 }

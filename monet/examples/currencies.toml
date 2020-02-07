@@ -1,0 +1,14 @@
+[[currency]]
+name = "Swiss Franc"
+code = "CHF"
+units = 2
+
+[[currency]]
+name = "US Dollar"
+code = "USD"
+units = 2
+
+[[currency]]
+name = "Imaginary Currency"
+code = "IMC"
+units = 4

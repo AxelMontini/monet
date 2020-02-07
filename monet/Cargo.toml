@@ -14,11 +14,24 @@ license = "MPL-2.0"
 default = ["i128"]
 serialize = ["serde"]
 csv = ["monet-derive/csv"]
+toml = ["monet-derive/toml"]
 i128 = []
-full = ["i128", "csv", "serialize"]
+full = ["i128", "serialize", "monet-derive/full"]
 
 [dependencies]
 serde = {version = "1.0.102", optional = true, features = ["derive"]}
 thiserror = "1"
 monet-derive = { path = "../monet-derive" }
 monet-traits = { path = "../monet-traits" }
+
+[[example]]
+name = "simple_store_cart"
+required-features = ["csv"]
+
+[[example]]
+name = "csv"
+required-features = ["csv"]
+
+[[example]]
+name = "toml"
+required-features = ["toml"]

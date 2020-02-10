@@ -35,3 +35,7 @@ required-features = ["csv"]
 [[example]]
 name = "toml"
 required-features = ["toml"]
+
+[[example]]
+name = "load_from_database"
+required-features = ["toml"]

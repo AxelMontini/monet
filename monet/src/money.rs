@@ -171,7 +171,7 @@ mod tests {
         use std::convert::TryFrom;
 
         let dynamic = MoneyDynamic::new(100, "CHF", 2);
-        let err: Result<Money<currency::USD>, _> = Money::try_from(dynamic.clone());
+        let err = Money::<currency::USD>::try_from(dynamic.clone());
 
         assert_eq!(
             Err(crate::ConvertError::DifferentCurrency(

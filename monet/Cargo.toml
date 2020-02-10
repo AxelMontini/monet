@@ -1,0 +1,41 @@
+[package]
+name = "monet"
+version = "0.2.0-alpha.1"
+authors = ["Axel <axel.montini@gmail.com>"]
+edition = "2018"
+description = "Handle currency conversion and common operations (additions, ...)"
+repository = "https://github.com/AxelMontini/monet.git"
+readme = "README.md"
+license = "MPL-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["i128"]
+serialize = ["serde"]
+csv = ["monet-derive/csv"]
+toml = ["monet-derive/toml"]
+i128 = []
+full = ["i128", "serialize", "monet-derive/full"]
+
+[dependencies]
+serde = {version = "1.0.102", optional = true, features = ["derive"]}
+thiserror = "1"
+monet-derive = { path = "../monet-derive" }
+monet-traits = { path = "../monet-traits" }
+
+[[example]]
+name = "simple_store_cart"
+required-features = ["csv"]
+
+[[example]]
+name = "csv"
+required-features = ["csv"]
+
+[[example]]
+name = "toml"
+required-features = ["toml"]
+
+[[example]]
+name = "load_from_database"
+required-features = ["toml"]
